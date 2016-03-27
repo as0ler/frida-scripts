@@ -13,8 +13,15 @@ def on_message(message, data):
 
 def do_hook():
 
-    # $methods: array containing native method names exposed by this object
+    #NSFile Hooker
+    #Hooking the following methods:
+	#-createFileAtPat
+    #NSFile Hooker
+    #Hooking the following methods:
+	#-createFileAtPath
 
+    # $methods: array containing native method names exposed by this object
+	
     hook = """
 
     if(ObjC.available) {
@@ -58,7 +65,7 @@ def do_hook():
 
 if __name__ == '__main__':
     try:
-        session = frida.get_usb_device().attach("testingDataProtectionclasses")
+        session = frida.get_usb_device().attach(str(sys.argv[1]))
         script = session.create_script(do_hook())
         script.on('message', on_message)
         script.load()
