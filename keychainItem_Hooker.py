@@ -77,7 +77,7 @@ def do_hook():
 
 if __name__ == '__main__':
     try:
-        session = frida.get_usb_device().attach(str(sys.argv[1]))
+        session = frida.get_remote_device().attach(str(sys.argv[1]))
         script = session.create_script(do_hook())
         script.on('message', on_message)
         script.load()
