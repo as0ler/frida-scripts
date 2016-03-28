@@ -28,37 +28,80 @@ if(ObjC.available) {
 	send("Jailbreak Detection enabled");
 	for(var className in ObjC.classes) {
 	    if (ObjC.classes.hasOwnProperty(className)) {
-		if(className == "NSFileManager") {
-		    send("Found our target class : " + className);
+					//Jailbreak detection via accessing special files
+					if(className == "NSFileManager") {
+					    send("Found our target class : " + className);
 
-				var hook = ObjC.classes.NSFileManager["- fileExistsAtPath:"];
-				Interceptor.attach(hook.implementation, {
-				onEnter: function (args) {
-					var receiver = new ObjC.Object(args[0]); // NSFileManager
-					send("Target class : " + receiver);
+							var hook = ObjC.classes.NSFileManager["- fileExistsAtPath:"];
+							Interceptor.attach(hook.implementation, {
+							onEnter: function (args) {
+								var  path = ObjC.Object(args[2]).toString(); // NSString
 
-					var sel = ObjC.selectorAsString(args[1]);
-					send("Target method : " + sel);
-
-					var  path = ObjC.Object(args[2]).toString(); // NSString
-
-					this.jailbreakCall = false;
-					var i = jailbreakPaths.length;
-					while (i--) {
-					    if (jailbreakPaths[i] == path) {
-								send("Jailbreak detection => Trying to read path: "+path);
-								this.jailbreakCall = true;
-					    }
+								this.jailbreakCall = false;
+								var i = jailbreakPaths.length;
+								while (i--) {
+								    if (jailbreakPaths[i] == path) {
+											send("Jailbreak detection => Trying to read path: "+path);
+											this.jailbreakCall = true;
+								    }
+								}
+						  },
+							onLeave: function (retval) {
+								if(this.jailbreakCall) {
+									retval.replace(0x00);
+									send("Jailbreak detection bypassed!");
+								}
+							}
+						});
 					}
-			  },
-				onLeave: function (retval) {
-					if(this.jailbreakCall) {
-						retval.replace(0x0);
-						send("Jailbreak detection bypassed!");
+					//Jailbreak detection via writing to forbidden paths
+					if(className == "NSString") {
+					    send("Found our target class : " + className);
+
+							var hook = ObjC.classes.NSString["- writeToFile:atomically:encoding:error:"];
+							Interceptor.attach(hook.implementation, {
+							onEnter: function (args) {
+								var  path = ObjC.Object(args[2]).toString(); // NSString
+								//send("Path : " + path);
+
+								if (path.indexOf("private") >= 0) {
+											send("Jailbreak detection => Trying to write path: "+path);
+											this.jailbreakCall = true;
+											this.error = args[5];
+								}
+						  },
+							onLeave: function (retval) {
+								if(this.jailbreakCall) {
+									var error = ObjC.classes.NSError.alloc();
+									Memory.writePointer(this.error, error);
+									send("Jailbreak detection bypassed!");
+								}
+						  }
+						});
 					}
-				}
-			});
-		}
+					//Jailbreak detection via cydia URL Schema
+					if(className == "UIApplication") {
+					    send("Found our target class : " + className);
+
+							var hook = ObjC.classes.UIApplication["- canOpenURL:"];
+							Interceptor.attach(hook.implementation, {
+							onEnter: function (args) {
+								var  url = ObjC.Object(args[2]).toString(); // NSString
+								send("URL : " + url);
+
+								if (url.indexOf("cydia") >= 0) {
+											send("Jailbreak detection => Trying to use Cydia URL Schema: "+url);
+											this.jailbreakCall = true;
+								}
+						  },
+							onLeave: function (retval) {
+								if(this.jailbreakCall) {
+									retval.replace(0x00);
+									send("Jailbreak detection bypassed!");
+								}
+						  }
+						});
+					}
 	    }
 	}
 } else {
