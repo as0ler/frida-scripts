@@ -3,7 +3,7 @@ if(ObjC.available) {
 	    if (ObjC.classes.hasOwnProperty(className)) {
 		//Connection
 			if(className == "NSURLConnection") {
-				send("Found our target class : " + className);
+				send("Found target class : " + className);
 				var hook = ObjC.classes.NSURLConnection["- start"];
 				Interceptor.attach(hook.implementation, {
 					onEnter: function(args) {

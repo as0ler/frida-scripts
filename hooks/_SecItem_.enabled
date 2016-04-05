@@ -3,18 +3,16 @@ var hookMethods = ["SecItemAdd", "SecItemUpdate", "SecItemDelete"];
 
 for (index = 0; index < hookMethods.length; index++) {
 	var methodName = hookMethods[index];
-	send("Hooking class : " + className);
-    
 	var ptr = null;
-	Module.enumerateExports(className, { 
+	Module.enumerateExports(className, {
 		onMatch: function(imp) {
 			if (imp.type == "function" && imp.name == methodName) {
 				send("Found target method : " + methodName);
-			
+
 				try {
 					Interceptor.attach(ptr(imp.address), {
-						onEnter: function(args) { 
-							send("Hooking method : " + imp.name);
+						onEnter: function(args) {
+							send("[+] Keychain operation: " + imp.name);
 							var params = ObjC.Object(args[0]); // CFDictionaryRef => NSDictionary
 							var keys = params.allKeys();
 							for (index = 0; index < keys.count(); index++) {
@@ -25,7 +23,7 @@ for (index = 0; index < hookMethods.length; index++) {
 									v = string.initWithData_encoding_(v,4).toString();
 								}
 								if (k == "pdmn") {
-									if (v == "ak") { 
+									if (v == "ak") {
 										v = "kSecAttrAccessibleWhenUnlocked";
 									} else if (v == "ck") {
 										v = "kSecAttrAccessibleAfterFirstUnlock";
@@ -40,7 +38,7 @@ for (index = 0; index < hookMethods.length; index++) {
 										v = "kSecAttrAccessibleAlwaysThisDeviceOnly";
 									} 
 								} 
-								send("   " + k + "=" + v);
+								send("\t-   " + k + "=" + v);
 							}
 						}
 					});

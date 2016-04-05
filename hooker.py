@@ -18,6 +18,7 @@ if __name__ == '__main__':
 	parser = OptionParser(usage="usage: %prog [options] <process_to_hook>",version="%prog 1.0")
 	parser.add_option("-A", "--attach", action="store_true", default=False,help="Attach to a running process")
 	parser.add_option("-S", "--spawn", action="store_true", default=False,help="Spawn a new process and attach")
+	parser.add_option("-P", "--pid", action="store_true", default=False,help="Attach to a pid process")
 
 	(options, args) = parser.parse_args()
 	if (options.spawn):
@@ -25,7 +26,10 @@ if __name__ == '__main__':
        		pid = frida.get_usb_device().spawn([args[0]])
 		session = frida.get_usb_device().attach(pid) 
 	elif (options.attach):
-		print ("[*] Attaching to "+str(args[0]))
+		print ("[*] Attaching to process"+str(args[0]))
+       		session = frida.get_usb_device().attach(str(args[0]))
+	elif (options.pid):
+		print ("[*] Attaching to PID "+str(args[0]))
        		session = frida.get_usb_device().attach(str(args[0]))
 	else:
 		print ("Error")
